@@ -3,8 +3,6 @@ A well-dressed pixel cat for your desktop. Stay stressed, dress well.
 
 Yecatz 是一只穿西装的像素橘猫桌宠。他会在桌面上陪你聊天、推荐音乐、查询天气，也会偶尔说一句简短的话。
 
-<img src="Assets/cat.png" alt="穿西装、打领带的像素橘猫 Yecatz" width="220">
-
 ## 下载与运行
 
 前往项目的 **Releases** 页面，下载 `Yecatz-macOS-arm64.zip`，解压后打开 `Yecatz.app`。
