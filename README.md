@@ -11,7 +11,7 @@ Yecatz 是一只穿西装的像素橘猫桌宠。他会在桌面上陪你聊天�
 
 支持 Windows x64。
 
-前往 [Releases](https://github.com/YenningC/Yecatz/releases) 下载 macOS 对应版本。
+前往 [Releases](https://github.com/YenningC/Yecatz/releases) 下载 Windows 对应版本。
 
 ### macOS 版下载
 
