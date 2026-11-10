@@ -1,13 +1,16 @@
 # Yecatz
-A well-dressed pixel cat for your desktop. Stay stressed, dress well.
+
+**Stay stressed, dress well.**
 
 Yecatz 是一只穿西装的像素橘猫桌宠。他会在桌面上陪你聊天、推荐音乐、查询天气，也会偶尔说一句简短的话。
+
+<img src="Assets/cat.png" alt="穿西装、打领带的像素橘猫 Yecatz" width="220">
 
 ## 下载与运行
 
 前往项目的 **Releases** 页面，下载 `Yecatz-macOS-arm64.zip`，解压后打开 `Yecatz.app`。
 
-当前版本支持 **Apple 芯片的 Mac，系统要求 macOS 14 或更新版本**。Windows 版本尚未完成。
+当前版本支持 **Apple 芯片的 Mac，系统要求 macOS 14 或更新版本**。Windows 版本正在移植，详见 [Windows 开发说明](windows/README.md)。
 
 应用目前未经过 Apple 公证。如果首次打开时被 macOS 阻止，请在确认下载来源可信后，前往「系统设置 → 隐私与安全性」，选择「仍要打开」。
 
@@ -72,3 +75,9 @@ SDKROOT=/path/to/MacOSX.sdk ./build.sh
 
 - 像素字体使用 [缝合像素字体 / Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font)。字体许可证随项目保存在 `Assets/Font-Licenses/`。
 - 天气数据由 [Open-Meteo](https://open-meteo.com/) 提供。
+
+## 检查更新
+
+Yecatz 每次启动时会查询 GitHub 上最新的正式 Release。发现新版本时，可以打开发布页面下载；也可以通过菜单栏的「检查更新…」手动检查。更新不会自动下载安装。
+
+发布新版本时，将 `Info.plist` 中的 `CFBundleShortVersionString` 改成新版本号并重新构建，再使用对应标签（例如 `v0.1.2`）创建公开的 GitHub Release，附上新的 macOS 应用压缩包。版本号需要高于当前版本；草稿和预发布版本不会触发更新提示。仓库地址由 `Info.plist` 中的 `YecatzUpdateOwner` 和 `YecatzUpdateRepository` 指定。
