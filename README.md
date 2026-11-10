@@ -7,9 +7,17 @@ Yecatz 是一只穿西装的像素橘猫桌宠。他会在桌面上陪你聊天�
 
 前往项目的 **Releases** 页面，下载 `Yecatz-macOS-arm64.zip`，解压后打开 `Yecatz.app`。
 
-当前版本支持 **Apple 芯片的 Mac，系统要求 macOS 14 或更新版本**。Windows 版本正在移植，详见 [Windows 开发说明](windows/README.md)。
+### Windows 版下载
 
-应用目前未经过 Apple 公证。如果首次打开时被 macOS 阻止，请在确认下载来源可信后，前往「系统设置 → 隐私与安全性」，选择「仍要打开」。
+支持 Windows x64。
+
+[点击下载 Yecatz Windows 版](https://github.com/YenningC/Yecatz/releases/latest)
+
+下载 `Yecatz-Windows-x64.zip`，解压后运行程序。
+
+### macOS 版下载
+
+前往 [Releases](https://github.com/YenningC/Yecatz/releases) 下载 macOS 对应版本。
 
 ## 和 Yecatz 相处
 
