@@ -7,15 +7,17 @@ Yecatz 是一只穿西装的像素橘猫桌宠。他会在桌面上陪你聊天�
 
 前往项目的 **Releases** 页面，下载 `Yecatz-macOS-arm64.zip`，解压后打开 `Yecatz.app`。
 
-### Windows 版下载
+macOS
 
-支持 Windows x64。
+下载 `Yecatz-macOS-arm64.zip`，解压后打开 `Yecatz.app`。需要 Apple 芯片的 Mac 和 macOS 14 或更新版本。
 
-前往 [Releases](https://github.com/YenningC/Yecatz/releases) 下载 Windows 对应版本。
+应用尚未经过 Apple 公证。首次打开时如果被系统阻止，在确认下载来源可信后，前往「系统设置 → 隐私与安全性」，选择「仍要打开」。打开后，可以通过菜单栏里的**领带图标**管理 Yecatz。
 
-### macOS 版下载
+### Windows
 
-前往 [Releases](https://github.com/YenningC/Yecatz/releases) 下载 macOS 对应版本。
+Windows 版目前是开发版本，尚未完成 Windows 实机验证。如果 Release 中已有 `Yecatz-Windows-x64.zip`，下载并解压整个文件夹，然后运行其中的 `Yecatz.exe`。也可以按 [Windows 构建说明](windows/README.md) 自行构建。
+
+Windows 版使用系统托盘菜单，部分动画和功能与 macOS 版存在差异。
 
 ## 和 Yecatz 相处
 
@@ -25,6 +27,23 @@ Yecatz 是一只穿西装的像素橘猫桌宠。他会在桌面上陪你聊天�
 - **拖放文件**：把文件拖到 Yecatz 身上，他会播放处理文件的动画，并将文件移入 macOS 废纸篓。
 - **聊天**：鼠标悬浮在 Yecatz 身上，点击出现的「…」按钮，或者右键点击他。
 - **每小时一句**：Yecatz 会在空闲时说一句短句。可以通过菜单栏的领带图标关闭。
+
+macOS 上按住 Option 再单击可以直接触发隐藏动作。传文件连接期间，普通点击互动和拖放回收站会暂时停用。
+
+## 同网传文件
+
+两台电脑上的 Yecatz 可以直接传文件，不需要额外服务器。两台设备必须连接到允许设备互相访问的同一局域网；Mac 与 Windows 代码使用相同的连接方式。
+
+1. 一方在菜单栏或托盘菜单中选择「生成连接码…」，将连接码**私下**发给对方。连接码有效期为 5 分钟，连接一次后失效。
+2. 另一方选择「输入连接码…」，粘贴连接码。生成连接码的一方确认连接请求。
+3. 连接后，Yecatz 会抱起纸箱。把一个文件拖到自己这边的纸箱上，对方选择保存位置后开始传输；取消保存则拒绝接收。
+4. 完成后，选择「断开传输连接」，恢复普通点击互动和回收站功能。
+
+每次可传一个不超过 1 GB 的普通文件，暂不支持文件夹；已有同名文件不会被覆盖。文件分块加密并进行完整性校验。连接码包含一次性密钥，请确认对方身份，不要公开分享。
+
+双方需要保持在线。正常断开或出错时会清理临时文件；如果程序突然退出或断电，接收目录中可能留下 `.yecatz-*.part` 临时文件，可手动清理。
+
+校园网可能开启设备隔离，即使连接同一个 Wi-Fi 也未必能直连。连接失败时，请检查网络、局域网权限和防火墙；当前版本不支持跨网络中转或离线接收。
 
 ## 聊天设置
 
@@ -82,5 +101,3 @@ SDKROOT=/path/to/MacOSX.sdk ./build.sh
 ## 检查更新
 
 Yecatz 每次启动时会查询 GitHub 上最新的正式 Release。发现新版本时，可以打开发布页面下载；也可以通过菜单栏的「检查更新…」手动检查。更新不会自动下载安装。
-
-发布新版本时，将 `Info.plist` 中的 `CFBundleShortVersionString` 改成新版本号并重新构建，再使用对应标签（例如 `v0.1.2`）创建公开的 GitHub Release，附上新的 macOS 应用压缩包。版本号需要高于当前版本；草稿和预发布版本不会触发更新提示。仓库地址由 `Info.plist` 中的 `YecatzUpdateOwner` 和 `YecatzUpdateRepository` 指定。
