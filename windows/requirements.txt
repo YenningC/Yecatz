@@ -1,0 +1,5 @@
+PySide6==6.10.1
+Send2Trash==2.0.0
+keyring==25.7.0
+
+cryptography==50.0.2
