@@ -4,13 +4,9 @@
 
 一只穿西装、打领带的像素橘猫桌宠。Yecatz 有自己的性格和音乐品味，会陪你聊天、听音乐、查天气，也能阅读文件、换装，并给同一网络里的另一只 Yecatz 传文件。
 
-<img src="Assets/cat.png" alt="穿西装、打领带的像素橘猫 Yecatz" width="220">
-
-当前源码的版本号为 `0.1.2`。Windows 版与网页工具仍需要实机或真实服务验证；发布到 GitHub 前，请确认 Release 中的安装包对应你想分享的源码版本。
-
 ## 下载与安装
 
-在 [GitHub Releases](https://github.com/YenningC/Yecatz/releases) 页面查找对应系统的安装包。发布者需要先将构建好的文件上传到 Release，下载页面才会出现相应文件。
+在 [GitHub Releases](https://github.com/YenningC/Yecatz/releases) 页面查找对应系统的安装包。
 
 ### macOS
 
@@ -88,32 +84,7 @@ Yecatz 的性格、说话方式和兴趣由 [persona.txt](persona.txt) 中的人
 
 Yecatz 启动时会联网检查 GitHub 上最新的正式 Release，也可以通过菜单手动检查。发现新版本后，可以打开发布页面自行下载；应用不会自动安装更新。
 
-## 从源码构建
 
-### macOS
-
-需要 macOS 14 或更新版本，以及 Xcode 或 Command Line Tools：
-
-```bash
-./build.sh
-open Yecatz.app
-```
-
-构建脚本默认使用当前 Mac 的处理器架构。可以在构建前修改 `persona.txt` 来调整聊天人设。
-
-### Windows
-
-需要 64 位 Windows 和 Python 3.12。在项目根目录打开 PowerShell：
-
-```powershell
-.\windows\build.ps1
-```
-
-构建脚本会生成 `dist\Yecatz-Windows-x64.zip`。也可以上传源码后，在 GitHub Actions 中手动运行 **Build Windows**；完成后从该次运行的 Artifacts 下载构建结果。构建和分发前请在 Windows 实机验证，详见 [Windows 构建说明](windows/README.md)。
-
-## 发布更新
-
-修改 `Info.plist` 中的 `CFBundleShortVersionString` 和 `windows/yecatz.py` 中的 `VERSION`，为目标平台重新构建，然后创建对应标签（例如 `v0.1.2`）的公开 GitHub Release，并上传对应安装包。更新提示只检查正式 Release；版本号需要高于已安装版本。macOS 更新仓库配置位于 `Info.plist`，Windows 版的仓库地址位于 `windows/yecatz.py`。
 
 ## 致谢
 
