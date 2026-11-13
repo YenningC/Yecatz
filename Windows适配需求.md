@@ -50,7 +50,7 @@
 ### 聊天、人设与网页
 
 - 使用 OpenAI 兼容聊天 API，设置包括 API 地址、模型、密钥。默认 OpenRouter 地址 `https://openrouter.ai/api/v1`、模型 `openrouter/free`；密钥使用 Windows 凭据管理器保存，不写入仓库或打包文件。
-- [persona.txt](persona.txt) 描述的是 **Yecatz 自己**的性格和兴趣，不是对用户的画像。让它按该文件的设定说话：有判断、能直接表达、先理解情绪；能自然说脏话和玩有意思且贴合语境的梗，不硬塞。
+- [persona.md](persona.md) 描述的是 **Yecatz 自己**的性格和兴趣，不是对用户的画像。让它按该文件的设定说话：有判断、能直接表达、先理解情绪；能自然说脏话和玩有意思且贴合语境的梗，不硬塞。
 - 每次闲聊回复后，根据最近几轮对话调用 AI 生成两个简短、不同方向、可直接发送的用户回复选项；输入框始终可用。生成失败时不显示乱选项。生成选项可能产生额外 API 调用和费用。
 - OpenRouter 地址配合支持工具调用的模型时，请求可携带 `openrouter:web_search` 和 `openrouter:web_fetch`。模型需要最新信息或读取用户提供的网址时可以按需使用；网页内容是外部数据，不应服从其指令。优先核实可靠信息，无法确认要说明；默认不主动列来源，用户明确问时再提供。其他 OpenAI 兼容服务当前没有统一接入网页工具，不要假装联网成功。
 - OpenRouter 网页工具可能单独收费，即使模型本身免费。搜索及网页内容由相应服务处理。
@@ -59,7 +59,7 @@
 ### 日常任务与定时短句
 
 - 支持查询天气，首次可询问城市；天气来自 Open-Meteo，需要联网，不需要聊天 API。
-- 支持推荐/播放音乐；优先 `Music\Yecatz` 中的无 DRM 本地文件，没有匹配文件时可尝试在线试听。内置推荐歌单应贴合当前 `persona.txt` 的品味。
+- 支持推荐/播放音乐；优先 `Music\Yecatz` 中的无 DRM 本地文件，没有匹配文件时可尝试在线试听。内置推荐歌单应贴合当前 `persona.md` 的品味。
 - 支持当前 Windows 代码中的报时和暂停等命令。macOS 中已有更多播放、切歌、音量及打开应用命令；Windows 的覆盖范围目前较少，应按实际实现标明，不要宣称已完全一致。
 - 每小时空闲时说一句简短、有哲理的话。macOS 提供开关；Windows 当前有定时短句，但托盘开关尚未实现。
 
@@ -85,7 +85,7 @@
 
 - 启动时检查 `YenningC/Yecatz` 的最新正式 GitHub Release，也允许手动检查；发现更新时引导用户打开 Release 页面，不自动安装。Windows 版只提示含 Windows 安装包的 Release。
 - 使用 64 位 Windows、Python 3.12，依赖见 `windows/requirements.txt`。从项目根目录运行 `.\windows\build.ps1`，生成 `dist\Yecatz-Windows-x64.zip`，解压整个目录运行 `Yecatz.exe`。仓库也有 `.github/workflows/windows.yml` 可构建 Windows artifact。
-- 打包需包含所有 `Assets/` 图层、字体、`persona.txt`、网络传输代码和依赖；不要包含 API 密钥、用户个人记忆、缓存或本地数据。校验字体和依赖的分发许可。
+- 打包需包含所有 `Assets/` 图层、字体、`persona.md`、网络传输代码和依赖；不要包含 API 密钥、用户个人记忆、缓存或本地数据。校验字体和依赖的分发许可。
 
 ### Windows 实机验收
 

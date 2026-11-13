@@ -1666,7 +1666,7 @@ final class ChatController: ObservableObject {
     }
 
     private static func loadPersona() -> String {
-        if let url = Bundle.main.url(forResource: "persona", withExtension: "txt"),
+        if let url = Bundle.main.url(forResource: "persona", withExtension: "md") ?? Bundle.main.url(forResource: "persona", withExtension: "txt"),
            let text = try? String(contentsOf: url, encoding: .utf8),
            !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return text.trimmingCharacters(in: .whitespacesAndNewlines)

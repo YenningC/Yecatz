@@ -7,7 +7,8 @@ from pathlib import Path
 source = Path(__file__).resolve().parent
 output = Path(sys.argv[1])
 output.mkdir(parents=True, exist_ok=True)
-persona = (source / "persona.txt").read_text(encoding="utf-8").strip()
+persona_file = (source / "persona.md") if (source / "persona.md").exists() else (source / "persona.txt")
+persona = persona_file.read_text(encoding="utf-8").strip()
 prompts = set()
 
 for split in ("train", "valid", "test"):
