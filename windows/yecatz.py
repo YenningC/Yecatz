@@ -30,7 +30,7 @@ SETTINGS = DATA / "settings.json"
 SERVICE = "Yecatz"
 QUOTES = ["慢一点，也是在往前。", "允许答案晚一点来。", "日子不用每页都写满。",
           "有些路，走着才看得清。", "先看脚下，再看远方。", "你可以边走边改变主意。"]
-PERSONA = (ROOT / "persona.txt").read_text(encoding="utf-8")
+PERSONA = (ROOT / "persona.md" if (ROOT / "persona.md").exists() else ROOT / "persona.txt").read_text(encoding="utf-8")
 
 
 def load_settings():

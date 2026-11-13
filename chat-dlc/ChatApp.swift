@@ -111,8 +111,16 @@ private final class Chat: ObservableObject {
     }
 
     private func persona() -> String {
-        let source = Bundle.main.bundleURL.deletingLastPathComponent().appendingPathComponent("chat-dlc/persona.txt")
-        for url in [source, Bundle.main.url(forResource: "persona", withExtension: "txt")].compactMap({ $0 }) {
+        let parent = Bundle.main.bundleURL.deletingLastPathComponent()
+        let sourceMd = parent.appendingPathComponent("chat-dlc/persona.md")
+        let sourceTxt = parent.appendingPathComponent("chat-dlc/persona.txt")
+        let candidates = [
+            sourceMd,
+            sourceTxt,
+            Bundle.main.url(forResource: "persona", withExtension: "md"),
+            Bundle.main.url(forResource: "persona", withExtension: "txt")
+        ].compactMap({ $0 })
+        for url in candidates {
             if let text = try? String(contentsOf: url, encoding: .utf8), !text.isEmpty {
                 return text
             }

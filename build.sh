@@ -43,7 +43,7 @@ install_bundle() {
 contents="$scratch/Yecatz.app/Contents"
 mkdir -p "$contents/MacOS" "$contents/Resources"
 cp Info.plist "$contents/Info.plist"
-cp persona.txt "$contents/Resources/persona.txt"
+cp persona.md "$contents/Resources/persona.md"
 ditto Assets "$contents/Resources"
 "${compiler[@]}" -target "$(uname -m)-apple-macos14.0" main.swift Chat.swift Commands.swift Weather.swift Updates.swift Transfer.swift -o "$contents/MacOS/Yecatz"
 install_bundle Yecatz.app
