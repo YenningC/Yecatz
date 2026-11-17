@@ -6,7 +6,9 @@
 
 ## 在 Windows 上构建
 
-需要 64 位 Windows 和 Python 3.12。打开 PowerShell，在项目根目录运行：
+需要 64 位 Windows 和 Python 3.12。构建前请向维护者取得完整的 `Assets` 素材。构建脚本会在安装依赖之前检查 `AppIcon.icns`、`cat.png`、`cat-blink.png`、`cat-entry.png`、`pixel-zh-hans.ttf` 和 `tie-status.png`，并列出缺少或为空的文件。
+
+打开 PowerShell，在项目根目录运行下面的命令。
 
 ```powershell
 .\windows\build.ps1
@@ -14,7 +16,29 @@
 
 构建完成后，`dist\Yecatz-Windows-x64.zip` 包含运行所需的文件。解压整个文件夹并运行 `Yecatz.exe`。
 
-也可以将完整源码和 `.github/workflows/windows.yml` 上传到 GitHub，在仓库的 Actions 页面运行 **Build Windows**。构建完成后，从该次运行的 Artifacts 下载压缩包；只有在 Windows 上实测通过后再附到 Release。
+发布时通过参数指定版本，并创建同名的正式 GitHub Release。下面的 `1.0.0_W` 用于演示格式，实际发布时请使用高于已有 Windows Release 的版本号。
+
+```powershell
+.\windows\build.ps1 -Version 1.0.0_W
+```
+
+将构建产物 `dist\Yecatz-Windows-x64.zip` 上传至 `1.0.0_W` Release。构建脚本会生成 `Yecatz/update-version.json`，应用通过该文件识别已安装版本。请完整保留压缩包内容，并在 Windows 上实测通过后发布。
+
+## 更新
+
+启动时会后台检查更新，也可以从托盘菜单选择「检查更新…」。Windows 只接受 `_W` 标签的正式版本，并下载 `Yecatz-Windows-x64.zip`。确认更新后，程序会下载、验证并替换当前安装，重新启动成功后自动清理本次替换产生的旧版备份。安装或启动失败时会尝试恢复旧版。
+
+更新只替换 `Yecatz.exe`、`_internal` 和 `update-version.json`，保留安装目录里的其他文件。如果更新中断，关闭所有 Yecatz 窗口和托盘进程，再运行安装目录旁的恢复脚本。例如安装在 `Yecatz` 文件夹时，运行旁边 `.Yecatz.yecatz-update` 文件夹里的 `Restore-Yecatz.cmd`。若安装尚未确认成功，脚本会恢复旧版。若新版已确认启动，脚本会完成备份清理。
+
+请先结束文件传输，并将应用放在当前账号可写入的目录。旧版用户需要先手动安装一次包含此更新功能的版本。两端的发布规则见项目根目录的 README。
+
+## 更新回归测试
+
+在 Windows 上从源码根目录运行以下命令。安装事务测试使用临时测试应用，需要系统 Windows PowerShell 和 .NET Framework 的 C# 编译器。
+
+```powershell
+py -3.12 -m unittest discover -s windows -p "test_update*.py" -v
+```
 
 ## 使用
 

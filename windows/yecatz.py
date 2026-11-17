@@ -8,11 +8,10 @@ import threading
 import urllib.error
 import urllib.parse
 import urllib.request
-import webbrowser
 from pathlib import Path
 
 import keyring
-from PySide6.QtCore import QFile, Qt, QTimer, Signal, QObject, QRectF, QPoint, QUrl
+from PySide6.QtCore import QEvent, QFile, Qt, QTimer, Signal, QObject, QRectF, QPoint, QUrl
 from PySide6.QtGui import QAction, QActionGroup, QFont, QFontDatabase, QIcon, QPainter, QPixmap, QColor, QPainterPath, QPen, QTransform
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import (
@@ -20,8 +19,9 @@ from PySide6.QtWidgets import (
     QLineEdit, QLabel, QMenu, QMessageBox, QSystemTrayIcon, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog,
 )
 from transfer import Transfer
+import updates
 
-VERSION = "0.1.2"
+VERSION = updates.installed_version()
 ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
 ASSETS = ROOT / "Assets"
 DATA = Path(os.environ.get("APPDATA", Path.home())) / "Yecatz"
@@ -80,7 +80,8 @@ class Signals(QObject):
     reply = Signal(str)
     api_done = Signal(str, bool, int)
     options = Signal(object, int)
-    update = Signal(str, str)
+    update = Signal(object)
+    update_prepared = Signal(str)
     music = Signal(str, str)
 
 
@@ -162,7 +163,11 @@ class Pet(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAcceptDrops(True)
         self.setMouseTracking(True)
-        self.resize(220, 265)
+        self.setFixedSize(220, 265)
+        self.display_refresh = QTimer(self)
+        self.display_refresh.setSingleShot(True)
+        self.display_refresh.timeout.connect(self.refresh_display_surface)
+        self.refreshing_display = False
         self.settings = load_settings()
         self.reading_mode = False
         self.hovering = False
@@ -186,6 +191,10 @@ class Pet(QWidget):
         self.signals.api_done.connect(self.finish_api)
         self.signals.options.connect(self.update_reply_options)
         self.signals.update.connect(self.show_update)
+        self.signals.update_prepared.connect(self.finish_update)
+        self.update_lock = threading.Lock()
+        self.update_installing = False
+        self.update_prompt_open = False
         self.signals.music.connect(self.play_media)
         self.player = QMediaPlayer(self)
         self.audio = QAudioOutput(self)
@@ -249,7 +258,7 @@ class Pet(QWidget):
                 action.triggered.connect(lambda checked=False, k=key, v=value: self.set_wardrobe(k, v))
         self.add_action(menu, "显示 Yecatz", self.show)
         self.add_action(menu, "隐藏 Yecatz", self.hide)
-        self.add_action(menu, "检查更新…", lambda: self.check_update(True))
+        self.add_action(menu, "检查更新…", lambda: self.thread(self.check_update, True))
         menu.addSeparator()
         self.add_action(menu, "退出 Yecatz", QApplication.quit)
         self.tray.setContextMenu(menu)
@@ -262,7 +271,42 @@ class Pet(QWidget):
         self.entering = True
         self.entry_tick = 0
         self.show()
+        self.windowHandle().screenChanged.connect(self.schedule_display_refresh)
         self.thread(self.check_update, False)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.schedule_display_refresh()
+
+    def event(self, event):
+        dpi_changed = event.type() == QEvent.Type.DevicePixelRatioChange
+        result = super().event(event)
+        if dpi_changed:
+            self.schedule_display_refresh()
+        return result
+
+    def schedule_display_refresh(self, *args):
+        if hasattr(self, "display_refresh") and not getattr(self, "refreshing_display", False):
+            self.display_refresh.start(100)
+
+    def refresh_display_surface(self):
+        if not self.isVisible():
+            return
+        if self.drag_start is not None or self.entering:
+            self.display_refresh.start(100)
+            return
+        # Reallocate the translucent native surface after a monitor/DPI transition.
+        # A repaint alone can retain the incorrectly sized Windows backing store.
+        self.refreshing_display = True
+        position = self.pos()
+        try:
+            self.setFixedSize(221, 265)
+            self.repaint()
+            self.setFixedSize(220, 265)
+            self.move(position)
+            self.update()
+        finally:
+            self.refreshing_display = False
 
     @staticmethod
     def add_action(menu, text, callback):
@@ -325,6 +369,7 @@ class Pet(QWidget):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self.show()
             self.raise_()
+            self.schedule_display_refresh()
 
     def thread(self, fn, *args):
         threading.Thread(target=fn, args=args, daemon=True).start()
@@ -484,6 +529,7 @@ class Pet(QWidget):
         if self.transfer.state == "idle" and event.button() == Qt.MouseButton.LeftButton and not self.moved:
             self.single_timer.start(QApplication.doubleClickInterval())
         self.drag_start = None
+        self.schedule_display_refresh()
 
     def mouseDoubleClickEvent(self, event):
         if self.transfer.state == "idle" and event.button() == Qt.MouseButton.LeftButton:
@@ -936,29 +982,57 @@ class Pet(QWidget):
             pass
 
     def check_update(self, manual=False):
+        if self.update_installing or not self.update_lock.acquire(blocking=False):
+            if manual:
+                self.signals.reply.emit("正在检查或安装更新，请稍候。")
+            return
         try:
-            release = get_json("https://api.github.com/repos/YenningC/Yecatz/releases/latest",
-                               headers={"Accept": "application/vnd.github+json", "User-Agent": "Yecatz/" + VERSION})
-            tag = release["tag_name"]
-            def version(value):
-                parts = [int(part) for part in value.lstrip("vV").split(".")]
-                return tuple(parts + [0] * max(0, 3 - len(parts)))
-            url = urllib.parse.urlparse(release["html_url"])
-            has_windows = any(item.get("name") == "Yecatz-Windows-x64.zip" for item in release.get("assets", []))
-            if (has_windows and not release["prerelease"] and not release["draft"] and version(tag) > version(VERSION)
-                    and url.scheme == "https" and url.netloc.lower() == "github.com"
-                    and url.path.lower().startswith("/yenningc/yecatz/releases/")):
-                self.signals.update.emit(tag, release["html_url"])
+            release = updates.check_update(VERSION, get_json)
+            if release:
+                self.signals.update.emit(release)
             elif manual:
                 self.signals.reply.emit("暂无适用于 Windows 的新版本。")
-        except (OSError, ValueError, KeyError):
+        except (OSError, ValueError, KeyError, TypeError):
             if manual:
                 self.signals.reply.emit("暂时无法检查更新。")
+        finally:
+            self.update_lock.release()
 
-    def show_update(self, tag, url):
-        result = QMessageBox.question(self, "Yecatz 更新", f"发现 {tag}，打开下载页面吗？")
-        if result == QMessageBox.StandardButton.Yes:
-            webbrowser.open(url)
+    def show_update(self, release):
+        if self.update_installing or self.update_prompt_open:
+            return
+        self.update_prompt_open = True
+        try:
+            result = QMessageBox.question(
+                self, "Yecatz 更新",
+                f"发现 Windows 新版本 {release['tag_name']}，当前版本为 {VERSION}。\n"
+                "现在下载并重启更新吗？重启会断开传输连接。\n"
+                "新版成功启动后会自动清理旧版备份。",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if result == QMessageBox.StandardButton.Yes:
+                self.update_installing = True
+                self.say("正在下载更新，完成后将自动重启…")
+                self.thread(self.install_update, release)
+        finally:
+            self.update_prompt_open = False
+            self.schedule_display_refresh()
+
+    def install_update(self, release):
+        try:
+            updates.prepare_update(release, ROOT)
+        except Exception as error:
+            self.signals.update_prepared.emit(str(error))
+        else:
+            self.signals.update_prepared.emit("")
+
+    def finish_update(self, error):
+        if error:
+            self.update_installing = False
+            QMessageBox.warning(self, "Yecatz 更新失败", error)
+        else:
+            QApplication.quit()
 
     def transfer_changed(self, state):
         if state != "idle":
@@ -1010,6 +1084,10 @@ def main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     pet = Pet()
+    QTimer.singleShot(0, lambda: updates.confirm_startup(VERSION))
+    update_error = os.environ.pop("YECATZ_UPDATE_ERROR", "")
+    if update_error:
+        QTimer.singleShot(0, lambda: QMessageBox.warning(pet, "Yecatz 更新", update_error))
     app.aboutToQuit.connect(pet.transfer.disconnect)
     sys.exit(app.exec())
 

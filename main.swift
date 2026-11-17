@@ -978,6 +978,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var chat: ChatController!
     private let transfer = TransferSession()
     private var updateTask: Task<Void, Never>?
+    private var updateMenuItem: NSMenuItem?
     var entryStart: Date?
     var entryFrom: CGFloat = 0
     var entryTo: CGFloat = 0
@@ -1045,7 +1046,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         wardrobeItem.submenu = wardrobeMenu
         menu.addItem(wardrobeItem)
-        menu.addItem(menuItem("检查更新…", action: #selector(checkForUpdates)))
+        let updateItem = menuItem("检查更新…", action: #selector(checkForUpdates))
+        updateMenuItem = updateItem
+        menu.addItem(updateItem)
         menu.addItem(.separator())
         let hourlyItem = menuItem("每小时一句", action: #selector(toggleHourlyThoughts(_:)))
         hourlyItem.state = hourlyThoughtsEnabled ? .on : .off
@@ -1062,7 +1065,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let timer = timer { RunLoop.main.add(timer, forMode: .common) }
         if hourlyThoughtsEnabled { startHourlyThoughts() }
         replayEntry()
-        checkUpdates(manual: false)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            MacUpdateInstaller.acknowledgeLaunch()
+            if let failure = MacUpdateInstaller.launchFailure() {
+                let alert = NSAlert()
+                alert.messageText = "更新已恢复"
+                alert.informativeText = failure
+                alert.runModal()
+            } else {
+                self?.checkUpdates(manual: false)
+            }
+        }
     }
     private func menuItem(_ title: String, action: Selector, key: String = "") -> NSMenuItem {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
@@ -1216,17 +1229,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
               let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else { return }
         let checker = GitHubUpdateChecker(owner: owner, repository: repository)
         updateTask = Task { [weak self] in
-            defer { self?.updateTask = nil }
+            var installing = false
+            defer {
+                self?.updateTask = nil
+                self?.updateMenuItem?.title = "检查更新…"
+            }
             do {
                 let result = try await checker.check(current: current)
                 let alert = NSAlert()
                 switch result {
-                case .update(let version, let url):
+                case .update(let update):
                     alert.messageText = "Yecatz 有新版本"
-                    alert.informativeText = "发现 \(version)，当前版本为 \(current)。前往 GitHub 查看更新并下载。"
-                    alert.addButton(withTitle: "前往下载")
+                    alert.informativeText = "发现 macOS 版本 \(update.release.tag_name)，当前版本为 \(current)。更新将下载并重启 Yecatz，新版启动成功后自动清理被替换的旧应用。请先完成正在进行的文件传输。"
+                    alert.addButton(withTitle: "下载并更新")
                     alert.addButton(withTitle: "稍后")
-                    if alert.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(url) }
+                    alert.addButton(withTitle: "查看更新说明")
+                    let response = alert.runModal()
+                    if response == .alertThirdButtonReturn {
+                        NSWorkspace.shared.open(update.release.html_url)
+                    } else if response == .alertFirstButtonReturn {
+                        installing = true
+                        self?.updateMenuItem?.title = "正在下载并准备更新…"
+                        try await MacUpdateInstaller.install(update)
+                        NSApp.terminate(nil)
+                    }
                 case .current:
                     guard manual else { return }
                     alert.messageText = "已经是最新版本"
@@ -1235,10 +1261,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     alert.runModal()
                 }
             } catch {
-                guard manual else { return }
+                guard manual || installing else { return }
                 let alert = NSAlert()
-                alert.messageText = "暂时无法检查更新"
-                alert.informativeText = "请检查网络，并确认 GitHub 仓库是公开的且已发布正式版本。"
+                alert.messageText = installing ? "更新未完成" : "暂时无法检查更新"
+                alert.informativeText = error.localizedDescription
                 alert.addButton(withTitle: "好")
                 alert.runModal()
             }

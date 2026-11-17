@@ -1,0 +1,7 @@
+.venv-win/
+__pycache__/
+*.pyc
+/build/
+/dist/
+/Yecatz.spec
+/Yecatz.app/

@@ -82,9 +82,57 @@ Yecatz 的性格、说话方式和兴趣由 [persona.md](persona.md) 中的人�
 
 ## 检查更新
 
-Yecatz 启动时会联网检查 GitHub 上最新的正式 Release，也可以通过菜单手动检查。发现新版本后，可以打开发布页面自行下载；应用不会自动安装更新。
+Yecatz 启动时会联网检查 GitHub Releases，也可以通过菜单手动检查。Windows 只检查 `_W` 结尾的版本标签，例如 `1.0.0_W`。macOS 只检查 `_M` 结尾的版本标签，例如 `1.0.0_M`。两端分别按数字版本选择较新的正式版本，跳过草稿和预发布版本。
 
+发现新版本后，确认更新即可下载对应平台的安装包、替换当前应用并重新启动。新版完成启动检查后，更新程序会自动清理本次替换产生的旧应用备份。安装或启动失败时会尝试恢复旧版，失败提示中会提供后续处理信息。请在文件传输结束后更新，并将应用放在当前账号可写入的目录。
 
+Windows 更新仅替换应用自带的运行文件。安装被关机等操作中断时，可按 Windows 说明恢复。macOS 一次交换两个应用目录，原安装路径在交换前后都保留应用。若交换后更新工具被强制退出且新版无法启动，可以在安装目录显示隐藏项，找到本次更新的 `.Yecatz-update-*` 目录，核对其中 `unpacked/Yecatz.app` 的版本后，用备份恢复旧版。 [Windows 更新恢复](windows/README.md#更新)
+
+已发布的旧版需要先手动安装一次包含此更新功能的版本，之后即可使用上述流程。
+
+### 发布新版本
+
+创建正式 GitHub Release，并使用对应的平台标签及附件名。应用读取 Release 列表，因此需要将标签发布为 Release。下面的 `1.0.0` 用于演示格式，实际发布时请使用高于已有对应平台 Release 的版本号。
+
+| 平台 | Release 标签 | 附件名 |
+| --- | --- | --- |
+| Windows | `1.0.0_W` | `Yecatz-Windows-x64.zip` |
+| macOS | `1.0.0_M` | `Yecatz-macOS-arm64.zip` |
+
+构建前需要向维护者取得完整的 `Assets` 素材。当前源码仓库尚缺少主动画图片、`AppIcon.icns` 和 `pixel-zh-hans.ttf` 等构建及运行资源。两端的构建脚本会在开始构建前列出缺少或为空的必需素材。
+
+Windows 在 PowerShell 中构建，版本参数会写入压缩包中的 `Yecatz/update-version.json`。
+
+```powershell
+.\windows\build.ps1 -Version 1.0.0_W
+```
+
+macOS 在 Apple 芯片的 Mac 上构建，版本参数会写入应用的 `Info.plist`，然后打包完整应用。
+
+```bash
+./build.sh 1.0.0_M
+ditto -c -k --sequesterRsrc --keepParent Yecatz.app Yecatz-macOS-arm64.zip
+```
+
+附件内的应用版本须与 Release 标签中的数字版本一致。构建后分别实测启动、更新、重启和旧版清理，再发布对应平台的附件。
+
+### 更新回归测试
+
+Windows 的版本筛选与安装事务测试在项目根目录运行，需要 Python 3.12、系统 Windows PowerShell 和 .NET Framework C# 编译器。
+
+```powershell
+py -3.12 -m unittest discover -s windows -p "test_update*.py" -v
+```
+
+macOS 的版本筛选测试需要支持本项目的 Swift 工具链。安装辅助脚本测试使用 Python 3 和 macOS Swift 工具链，在临时目录中验证原子交换、回滚和强制中断后的状态。
+
+```bash
+xcrun swiftc -swift-version 5 -parse-as-library Updates.swift tools/test_updates.swift -o /tmp/yecatz-update-tests
+/tmp/yecatz-update-tests
+python3 tools/test_mac_update_helper.py -v
+```
+
+上述回归测试之外，还需在两端用完整发行包验证更新流程。
 
 ## 致谢
 
